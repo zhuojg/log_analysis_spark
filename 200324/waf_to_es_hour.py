@@ -1,4 +1,3 @@
-from datetime import datetime
 from pyspark.sql.types import *
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import Row
@@ -19,8 +18,10 @@ es_nodes = "localhost:9200" # where elasticsearch service is, default is localho
 es_index = 'waf/logs'       # where to save data on elasticsearch
 
 
-data_path = '/logs/waf-dev/%s' % time.strftime('%Y%m%d%H', time.localtime(time.time()))     # absolute path of data on the hadoop
-print(data_path)
+data_path = '/logs/waf-dev/%s' % time.strftime('%Y%m%d%H', time.localtime(time.time()))     
+# absolute path of data on the hadoop, generate dir name according to local machine time.
+# e.g. 2020033014 -> 2020.3.30 14h
+
 hadoop_http_ip = 'localhost:5070'   # where the hadoop http is, default is localhost:50070
 hadoop_fs_ip = 'localhost:9000' # where SparkContext can access hadoop file, default is localhost:9000
 # ---
@@ -114,22 +115,12 @@ def write_2_es(file_path):
 def main():
     hdfs_client = pyhdfs.HdfsClient(hadoop_http_ip)
 
-    # with hdfs_client.open(latest_record) as f:
-    #     latest = f.readline().decode()
-
     for item in list(hdfs_client.listdir(data_path)):
         if item.split('.')[-1] == 'tmp':
             continue
         
         print(os.path.join(data_path, item))
         write_2_es(os.path.join(data_path, item))
-
-    # for item in list(reversed(hdfs_client.listdir(data_path))):
-    #     if item.split('.')[-1] == 'tmp':
-    #         continue
-
-    #     hdfs_client.create(path=latest_record, data=item, overwrite=True)
-    #     break
 
 
 if __name__ == '__main__':
